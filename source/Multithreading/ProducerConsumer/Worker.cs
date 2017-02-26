@@ -1,50 +1,57 @@
-﻿
-
-namespace Multithreading.ProducerConsumer
+﻿namespace Multithreading.ProducerConsumer
 {
     using System;
     using System.Collections.Concurrent;
     using System.Threading;
 
+    using log4net;
+
+    /// <summary>
+    /// A worker receives a collection to take elements from. After an element was succefully retrived it will call <see cref="actionToBeCalled"/>. 
+    /// Stopping the worker can be done via <see cref="RequestStop"/>.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class Worker<T>
     {
-        public Worker(BlockingCollection<T> collection, string workerName, Action<T> actionToBeCalled)
+        public Worker(BlockingCollection<T> collection, string workerName, Action<T> actionToBeCalled, ILog logger)
         {
-            // todo: add logging interface
+            if (collection == null) { throw new ArgumentNullException(nameof(collection));}
+            if (workerName == null) { throw new ArgumentNullException(nameof(workerName));}
+            if (actionToBeCalled == null) { throw new ArgumentNullException(nameof(actionToBeCalled));}
+            if (logger == null) { throw new ArgumentNullException(nameof(logger));}
+
             this.collection = collection;
             this.workerName = workerName;
             this.actionToBeCalled = actionToBeCalled;
             this.cancelationTokenSource = new CancellationTokenSource();
             this.cancelationToken = this.cancelationTokenSource.Token;
+            this.logger = logger;
         }
 
-        // This method will be called when the thread is started.
         public void DoWork()
         {
             while (!this.shouldStop)
             {
                 try
                 {
-                    //Console.WriteLine($"[{this.workerName}]: Calling collection take");
-                    var item = this.collection.Take(this.cancelationToken);
-                    //Console.WriteLine($"[{this.workerName}]: Retrieved item. Calling action with item {item}");
-                    this.actionToBeCalled.Invoke(item);
-                    //Console.WriteLine("worker thread: working...");
+                    var item = this.collection.Take(this.cancelationToken); // Take should block, until an element was added.
+                    this.actionToBeCalled?.Invoke(item);
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
+                    this.logger.Warn($"[{this.workerName}]: Exception occurred: {exception}");
                 }
-                
             }
-            Console.WriteLine("worker thread: terminating gracefully.");
+
+            this.logger.Debug($"[{this.workerName}]: Shutdown gracefully");
         }
         public void RequestStop()
         {
+            this.logger.Debug($"[{this.workerName}]: {nameof(this.RequestStop)}");
             this.cancelationTokenSource.Cancel();
             this.shouldStop = true;
         }
-        // Volatile is used as hint to the compiler that this data
-        // member will be accessed by multiple threads.
+        // Volatile is used as hint to the compiler that this data member will be accessed by multiple threads.
         private volatile bool shouldStop;
 
         private readonly BlockingCollection<T> collection;
@@ -56,5 +63,7 @@ namespace Multithreading.ProducerConsumer
         private readonly CancellationToken cancelationToken;
 
         private readonly CancellationTokenSource cancelationTokenSource;
+
+        private readonly ILog logger;
     }
 }

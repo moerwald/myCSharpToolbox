@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace ConsoleApplication1
 {
-    using System.Diagnostics;
-    using System.Dynamic;
+    using System;
     using System.Threading;
 
     using Multithreading.ProducerConsumer;
@@ -16,10 +10,8 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-            int highestComsumedItem = 0;
             var q = new QueueWithMultipleConsumerThreads<int>(100, i =>
                         {
-                            //Interlocked.Exchange(ref highestComsumedItem,i);
                             Console.WriteLine($"Consumed {i} from thread {Thread.CurrentThread.Name}, id: {Thread.CurrentThread.ManagedThreadId}");
                         });
 

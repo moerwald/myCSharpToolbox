@@ -1,1 +1,11 @@
 source/.vs/myCSharpToolBox/v14/.suo
+source/ConsoleApplication1/obj
+*.bin
+*.obj
+*.exe
+source/ConsoleApplication1/bin/
+*.dat
+source/_ReSharper.Caches
+source/packages/
+source/Multithreading/obj
+source/Multithreading/bin

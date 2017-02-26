@@ -1,25 +1,31 @@
-﻿using System;
-
+﻿
 namespace Multithreading.ProducerConsumer
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Threading;
 
+    using log4net;
+
     public class  QueueWithMultipleConsumerThreads<T>
     {
+
         private readonly ConcurrentBag<Thread> threads = new ConcurrentBag<Thread>();
         private readonly ConcurrentBag<Worker<T>> workers = new ConcurrentBag<Worker<T>>();
-
         private readonly BlockingCollection<T> queue = new BlockingCollection<T>();
 
         public QueueWithMultipleConsumerThreads(uint numberOfWorkerThreads, Action<T> actionToBeCalled  )
         {
-            if (numberOfWorkerThreads == 0) {  throw new ArgumentException($"{nameof(numberOfWorkerThreads)} must be > 0");}
+            if (numberOfWorkerThreads == 0) { throw new ArgumentException($"{nameof(numberOfWorkerThreads)} must be > 0"); }
+            if (actionToBeCalled == null) { throw new ArgumentNullException(nameof(actionToBeCalled));}
 
-            for (int i = 0; i < numberOfWorkerThreads; i++)
+            for (var i = 0; i < numberOfWorkerThreads; i++)
             {
+                // Create a worker and assign it to a thread
                 var threadName = $"Worker thread {i}";
-                var w = new Worker<T>(this.queue, threadName, actionToBeCalled);
+                var logger = LogManager.GetLogger(threadName);
+
+                var w = new Worker<T>(this.queue, threadName, actionToBeCalled, logger);
                 var t = new Thread(w.DoWork) { IsBackground = true, Name = threadName};
 
                 this.workers.Add(w);
@@ -41,18 +47,19 @@ namespace Multithreading.ProducerConsumer
 
         public void Shutdown()
         {
-            foreach (var worker in this.workers)
+            while (!this.workers.IsEmpty)
             {
-                worker.RequestStop();
+                Worker<T> w;
+                this.workers.TryTake(out w);
+                w?.RequestStop();
             }
 
-            foreach (var thread in this.threads)
+            while (!this.threads.IsEmpty)
             {
-                thread.Join(2000);
+                Thread t;
+                this.threads.TryTake(out t);
+                t?.Join(1000);
             }
-
-            // Todo: Clear bags
-
         }
     }
 }
