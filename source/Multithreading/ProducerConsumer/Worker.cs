@@ -35,7 +35,7 @@
                 try
                 {
                     var item = this.collection.Take(this.cancelationToken); // Take should block, until an element was added.
-                    this.actionToBeCalled?.Invoke(item);
+                    this.actionToBeCalled?.Invoke(item); // Invoke the given action with the dequeued item
                 }
                 catch (Exception exception)
                 {
