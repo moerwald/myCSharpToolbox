@@ -10,18 +10,17 @@ namespace ConsoleApplication1
     {
         static void Main(string[] args)
         {
-            var q = new QueueWithMultipleConsumerThreads<int>(100, i =>
+            var q = new QueueWithMultipleConsumerThreads<int>(
+                numberOfWorkerThreads: 10,
+                consumeAction: i =>
                         {
                             Console.WriteLine($"Consumed {i} from thread {Thread.CurrentThread.Name}, id: {Thread.CurrentThread.ManagedThreadId}");
                         });
 
-            for (int i = 0; i < 10000; i++)
-            {
-                q.Enque(i);
-            }
-
-
-            Thread.Sleep(5000);
+            // Add some entries to the q
+            for (int i = 0; i < 10000; i++) { q.Enque(i); }
+            
+            Thread.Sleep(5000); // Give the q time to work
             q.Shutdown();
 
             Console.WriteLine($"Remaing q item: {q.Count()}");

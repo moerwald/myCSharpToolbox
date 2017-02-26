@@ -7,22 +7,22 @@
     using log4net;
 
     /// <summary>
-    /// A worker receives a collection to take elements from. After an element was succefully retrived it will call <see cref="actionToBeCalled"/>. 
+    /// A worker receives a collection to take elements from. After an element was succefully retrived it will call <see cref="consumeAction"/>. 
     /// Stopping the worker can be done via <see cref="RequestStop"/>.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class Worker<T>
     {
-        public Worker(BlockingCollection<T> collection, string workerName, Action<T> actionToBeCalled, ILog logger)
+        public Worker(BlockingCollection<T> collection, string workerName, Action<T> consumeAction, ILog logger)
         {
             if (collection == null) { throw new ArgumentNullException(nameof(collection));}
             if (workerName == null) { throw new ArgumentNullException(nameof(workerName));}
-            if (actionToBeCalled == null) { throw new ArgumentNullException(nameof(actionToBeCalled));}
+            if (consumeAction == null) { throw new ArgumentNullException(nameof(consumeAction));}
             if (logger == null) { throw new ArgumentNullException(nameof(logger));}
 
             this.collection = collection;
             this.workerName = workerName;
-            this.actionToBeCalled = actionToBeCalled;
+            this.consumeAction = consumeAction;
             this.cancelationTokenSource = new CancellationTokenSource();
             this.cancelationToken = this.cancelationTokenSource.Token;
             this.logger = logger;
@@ -35,7 +35,7 @@
                 try
                 {
                     var item = this.collection.Take(this.cancelationToken); // Take should block, until an element was added.
-                    this.actionToBeCalled?.Invoke(item); // Invoke the given action with the dequeued item
+                    this.consumeAction?.Invoke(item); // Invoke the given action with the dequeued item
                 }
                 catch (Exception exception)
                 {
@@ -58,7 +58,7 @@
 
         private readonly string workerName;
 
-        private readonly Action<T> actionToBeCalled;
+        private readonly Action<T> consumeAction;
 
         private readonly CancellationToken cancelationToken;
 

@@ -9,15 +9,14 @@ namespace Multithreading.ProducerConsumer
 
     public class  QueueWithMultipleConsumerThreads<T>
     {
-
         private readonly ConcurrentBag<Thread> threads = new ConcurrentBag<Thread>();
         private readonly ConcurrentBag<Worker<T>> workers = new ConcurrentBag<Worker<T>>();
         private readonly BlockingCollection<T> queue = new BlockingCollection<T>();
 
-        public QueueWithMultipleConsumerThreads(uint numberOfWorkerThreads, Action<T> actionToBeCalled  )
+        public QueueWithMultipleConsumerThreads(uint numberOfWorkerThreads, Action<T> consumeAction  )
         {
             if (numberOfWorkerThreads == 0) { throw new ArgumentException($"{nameof(numberOfWorkerThreads)} must be > 0"); }
-            if (actionToBeCalled == null) { throw new ArgumentNullException(nameof(actionToBeCalled));}
+            if (consumeAction == null) { throw new ArgumentNullException(nameof(consumeAction));}
 
             for (var i = 0; i < numberOfWorkerThreads; i++)
             {
@@ -25,7 +24,7 @@ namespace Multithreading.ProducerConsumer
                 var threadName = $"Worker thread {i}";
                 var logger = LogManager.GetLogger(threadName);
 
-                var w = new Worker<T>(this.queue, threadName, actionToBeCalled, logger);
+                var w = new Worker<T>(this.queue, threadName, consumeAction, logger);
                 var t = new Thread(w.DoWork) { IsBackground = true, Name = threadName};
 
                 this.workers.Add(w);
