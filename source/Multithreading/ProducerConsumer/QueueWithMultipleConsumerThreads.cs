@@ -9,27 +9,28 @@ namespace Multithreading.ProducerConsumer
 
     public class  QueueWithMultipleConsumerThreads<T>
     {
-        private readonly ConcurrentBag<Thread> threads = new ConcurrentBag<Thread>();
         private readonly ConcurrentBag<Worker<T>> workers = new ConcurrentBag<Worker<T>>();
         private readonly BlockingCollection<T> queue = new BlockingCollection<T>();
+
+        private readonly CancellationTokenSource cancelationSource;
 
         public QueueWithMultipleConsumerThreads(uint numberOfWorkerThreads, Action<T> consumeAction  )
         {
             if (numberOfWorkerThreads == 0) { throw new ArgumentException($"{nameof(numberOfWorkerThreads)} must be > 0"); }
             if (consumeAction == null) { throw new ArgumentNullException(nameof(consumeAction));}
 
+            this.cancelationSource = new CancellationTokenSource();
+
             for (var i = 0; i < numberOfWorkerThreads; i++)
             {
                 // Create a worker and assign it to a thread
-                var threadName = $"Worker thread {i}";
+                var threadName = $"Worker {i}";
                 var logger = LogManager.GetLogger(threadName);
 
-                var w = new Worker<T>(this.queue, threadName, consumeAction, logger);
-                var t = new Thread(w.DoWork) { IsBackground = true, Name = threadName};
+                var w = new Worker<T>(this.queue, threadName, consumeAction, logger, this.cancelationSource.Token);
 
                 this.workers.Add(w);
-                this.threads.Add(t);
-                t.Start();
+                w.StartWork();
             }
         }
 
@@ -43,21 +44,14 @@ namespace Multithreading.ProducerConsumer
             return this.queue.Count;
         }
 
-
         public void Shutdown()
         {
+            this.cancelationSource.Cancel();
             while (!this.workers.IsEmpty)
             {
                 Worker<T> w;
                 this.workers.TryTake(out w);
-                w?.RequestStop();
-            }
-
-            while (!this.threads.IsEmpty)
-            {
-                Thread t;
-                this.threads.TryTake(out t);
-                t?.Join(1000);
+                w?.Shutdown();
             }
         }
     }
