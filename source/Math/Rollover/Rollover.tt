@@ -1,0 +1,36 @@
+﻿<#@ template language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly name="System.Core" #>
+
+<# Type[] types = new[] {
+    typeof(UInt16), typeof(UInt32), typeof(UInt64), typeof(byte)
+    };
+#>
+namespace MathHelper.Rollover
+{
+    using System;
+    public static class Rollover 
+    {
+        <# foreach (var type in types) 
+        { #>
+    public static <#= type.Name #> GetDifference (<#= type.Name #> oldValue, <#= type.Name #> actualValue) 
+            {
+                if (actualValue >= oldValue)
+                {
+                   return (<#= type.Name #>) (actualValue - oldValue);
+                }
+
+                // actualValue wrapped around unsinged maximum
+                // 0                                        Unsigned max
+                //   D1                           D2
+                // |<--->|                |<----------------->|
+                // |-----|----------------|-------------------|
+                //      actualValue     oldValue
+
+                return (<#= type.Name #>) ((<#= type.Name #>.MaxValue - oldValue) + actualValue);
+            }
+
+        <#
+        } #>
+    }
+}
