@@ -3,6 +3,7 @@ source/ConsoleApplication1/obj
 *.bin
 *.obj
 *.exe
+*.dll
 source/ConsoleApplication1/bin/
 *.dat
 source/_ReSharper.Caches
@@ -29,3 +30,8 @@ source/Math/obj/Debug/TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D9
 source/Math/obj/Debug/MathHelper.csproj.FileListAbsolute.txt
 source/Reflection/bin/Debug/Reflection.dll
 source/Reflection/obj/Debug/Reflection.csproj.FileListAbsolute.txt
+source/CollectionTest/obj/*
+source/CollectionTest/bin/*
+source/Collections/obj/*
+source/Collections/bin/*
+source/.vs/*
